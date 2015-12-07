@@ -889,8 +889,22 @@ switch ( depth%IMPL_COUNT ) { \
 }
 
 + (void)dumpClass:(Class)aClass {
+    // support protocol
+    NSMutableString *pro = [NSMutableString string];
+    unsigned count;
+    Protocol * __unsafe_unretained *list = class_copyProtocolList(aClass, &count);
+    if (count > 0) {
+        [pro appendString:@"<"];
+        for (int i = 0; i < count; i ++) {
+            [pro appendFormat:@"%s, ", protocol_getName(list[i])];
+        }
+        [pro appendString:@">"];
+    }
+    free(list);
+    
+    
     NSMutableString *str = [NSMutableString string];
-    [str appendFormat:@"@interface %s : %s {\n", class_getName(aClass), class_getName(class_getSuperclass(aClass))];
+    [str appendFormat:@"@interface %s : %s %@ {\n", class_getName(aClass), class_getName(class_getSuperclass(aClass)), pro];
 
     unsigned c;
     Ivar *ivars = class_copyIvarList(aClass, &c);
