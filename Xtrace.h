@@ -204,6 +204,9 @@ struct _xtrace_info {
 // dump runtime class info
 + (void)dumpClass:(Class)aClass;
 
+// dump runtime protocol info
++ (void)dumpProtocol:(Protocol*)protocol;
+
 // before, replacement and after callbacks to delegate
 + (void)forClass:(Class)aClass before:(SEL)sel callback:(SEL)callback;
 + (void)forClass:(Class)aClass replace:(SEL)sel callback:(SEL)callback;
