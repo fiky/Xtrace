@@ -890,39 +890,10 @@ switch ( depth%IMPL_COUNT ) { \
 
 + (void)dumpClass:(Class)aClass {
     // support protocol
-    NSMutableString *pro = [NSMutableString string];
-    unsigned count;
-    Protocol * __unsafe_unretained *list = class_copyProtocolList(aClass, &count);
-    if (count > 0) {
-        [pro appendString:@"<"];
-        for (int i = 0; i < count; i ++) {
-            [pro appendFormat:@"%s, ", protocol_getName(list[i])];
-            
-            NSLog(@"----protocol: %s-----", protocol_getName(list[i]));
-            unsigned int num_required = 0, num_optional = 0;
-            struct objc_method_description *requiredMethods = protocol_copyMethodDescriptionList(list[i], YES, YES, &num_required);
-            struct objc_method_description *optionalMethods = protocol_copyMethodDescriptionList(list[i], NO, YES, &num_optional);
-            for (unsigned int i = 0; i < num_required; i ++) {
-                struct objc_method_description method = requiredMethods[i];
-                SEL selector = method.name;
-                NSString *selectorString = [NSString stringWithCString:sel_getName(selector)
-                                                              encoding:NSUTF8StringEncoding];
-                NSLog(@"required -- %@ ", selectorString);
-            }
-            for (unsigned int j = 0; j < num_optional; j ++) {
-                struct objc_method_description method = optionalMethods[j];
-                SEL selector = method.name;
-                NSString *selectorString = [NSString stringWithCString:sel_getName(selector)
-                                                              encoding:NSUTF8StringEncoding];
-                NSLog(@"optional -- %@ ", selectorString);
-            }
-        }
-        [pro appendString:@">"];
-    }
-    free(list);
+    [Xtrace dumpProtocolForClass:aClass];
     
     NSMutableString *str = [NSMutableString string];
-    [str appendFormat:@"@interface %s : %s %@ {\n", class_getName(aClass), class_getName(class_getSuperclass(aClass)), pro];
+    [str appendFormat:@"@interface %s : %s {\n", class_getName(aClass), class_getName(class_getSuperclass(aClass))];
 
     unsigned c;
     Ivar *ivars = class_copyIvarList(aClass, &c);
@@ -945,19 +916,35 @@ switch ( depth%IMPL_COUNT ) { \
     printf( "%s\n@end\n\n", [str UTF8String] );
 }
 
++ (void)dumpProtocolForClass:(Class)aClass {
+    unsigned count;
+    Protocol * __unsafe_unretained *list = class_copyProtocolList(aClass, &count);
+    if (count > 0) {
+        for (int i = 0; i < count; i ++) {
+            [Xtrace dumpProtocol:list[i]];
+        }
+    }
+    free(list);
+}
+
 + (void)dumpProtocol:(Protocol*)protocol {
-//    NSString *protocolName = [NSString stringWithCString:protocol_getName(protocol) encoding:NSUTF8StringEncoding];
-    
-    unsigned int numberOfMethods = 0;
-    struct objc_method_description *methodDescriptions = protocol_copyMethodDescriptionList(protocol, NO /* optional only */, YES, &numberOfMethods);
-    for (unsigned int i = 0; i < numberOfMethods; ++i) {
-        struct objc_method_description methodDescription = methodDescriptions[i];
-        SEL selector = methodDescription.name;
-        
+    NSLog(@"----protocol: %s-----", protocol_getName(protocol));
+    unsigned int num_required = 0, num_optional = 0;
+    struct objc_method_description *requiredMethods = protocol_copyMethodDescriptionList(protocol, YES, YES, &num_required);
+    struct objc_method_description *optionalMethods = protocol_copyMethodDescriptionList(protocol, NO, YES, &num_optional);
+    for (unsigned int i = 0; i < num_required; i ++) {
+        struct objc_method_description method = requiredMethods[i];
+        SEL selector = method.name;
         NSString *selectorString = [NSString stringWithCString:sel_getName(selector)
                                                       encoding:NSUTF8StringEncoding];
-        
-        NSLog(@" %@ ", selectorString);
+        NSLog(@"required -- %@ ", selectorString);
+    }
+    for (unsigned int j = 0; j < num_optional; j ++) {
+        struct objc_method_description method = optionalMethods[j];
+        SEL selector = method.name;
+        NSString *selectorString = [NSString stringWithCString:sel_getName(selector)
+                                                      encoding:NSUTF8StringEncoding];
+        NSLog(@"optional -- %@ ", selectorString);
     }
 }
 
